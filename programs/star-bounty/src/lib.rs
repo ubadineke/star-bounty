@@ -60,6 +60,21 @@ pub mod star_bounty {
         )
     }
 
+    pub fn add_liquidity_quote_only(
+        ctx: Context<AddLiquidityQuoteOnly>,
+        vault_id: [u8; 32],
+        liquidity_delta: u128,
+        token_a_amount_threshold: u64,
+        token_b_amount_threshold: u64,
+    ) -> Result<()> {
+        instructions::add_liquidity_quote_only::handler(
+            ctx,
+            vault_id,
+            liquidity_delta,
+            token_a_amount_threshold,
+            token_b_amount_threshold,
+        )
+    }
     // / Main distribution crank - claims fees and distributes to investors
     // /
     // / This is the core function that should be called once per 24 hours.
