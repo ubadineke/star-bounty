@@ -1,7 +1,7 @@
-use anchor_lang::prelude::*;
 use crate::constants::*;
 use crate::errors::StarInvestorFeesError;
 use crate::state::PolicyConfig;
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(vault_id: [u8; 32])]

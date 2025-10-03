@@ -16,6 +16,11 @@ import { CpAmm } from "../target/types/cp_amm";
 import fs from "fs";
 import os from "os";
 import path from "path";
+import {
+  CpAmm as CPAmm,
+  GetDepositQuoteParams,
+  LiquidityDeltaParams,
+} from "@meteora-ag/cp-amm-sdk";
 
 describe("Initialize Honorary Position", () => {
   const provider = anchor.AnchorProvider.env();
@@ -51,6 +56,8 @@ describe("Initialize Honorary Position", () => {
 
   let tokenAAccount: PublicKey;
   let tokenBAccount: PublicKey;
+
+  let poolAccount;
 
   const programId = new PublicKey("cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG");
   const [eventAuthority] = PublicKey.findProgramAddressSync(
@@ -182,7 +189,7 @@ describe("Initialize Honorary Position", () => {
       const poolPubkey = new PublicKey(poolAddress);
 
       // Fetch and decode the account automatically via IDL
-      const poolAccount = await program2.account.pool.fetch(poolPubkey);
+      poolAccount = await program2.account.pool.fetch(poolPubkey);
 
       console.log("Pool Data:", poolAccount);
       // return;
@@ -381,6 +388,9 @@ describe("Initialize Honorary Position", () => {
       undefined,
       TOKEN_2022_PROGRAM_ID
     );
+    const liquidityDelta = new BN(1_000_000);
+    const tokenAThreshold = new BN(500_000_000); // 500 USDC
+    const tokenBThreshold = new BN(5_000_000_000); // 5 SOL
 
     console.log("✓ Quote balance:", quoteBalance.amount.toString(), "lamports");
     console.log("✓ Base balance:", baseBalance.amount.toString(), "lamports");
@@ -428,9 +438,35 @@ describe("Initialize Honorary Position", () => {
   it("Adds liquidity to the position", async () => {
     console.log("\n--- Adding Liquidity ---");
 
-    const liquidityDelta = new BN(1_000_000);
-    const tokenAThreshold = new BN(500_000_000); // 500 USDC (6 decimals)
-    const tokenBThreshold = new BN(5_000_000_000); // 5 SOL (9 decimals)
+    // const liquidityDelta = new BN("1844674407370955161600");
+    // const tokenAThreshold = new BN("18446744073709551615"); // 500 USDC (6 decimals)
+    // const tokenBThreshold = new BN("18446744073709551615"); // 5 SOL (9 decimals)
+
+    // const liquidityDelta = new BN("0");
+    const cpAmm = new CPAmm(provider.connection);
+    const liquidityDeltaParams: LiquidityDeltaParams = {
+      maxAmountTokenA: new BN("0"),
+      maxAmountTokenB: new BN("10"),
+      sqrtMaxPrice: poolAccount.sqrtMaxPrice,
+      sqrtMinPrice: poolAccount.sqrtMinPrice,
+      sqrtPrice: poolAccount.sqrtPrice,
+    };
+    const depositeQuoteParams: GetDepositQuoteParams = {
+      inAmount: new BN(10),
+      isTokenA: false,
+      minSqrtPrice: poolAccount.sqrtMinPrice,
+      maxSqrtPrice: poolAccount.sqrtMaxPrice,
+      sqrtPrice: poolAccount.sqrtPrice,
+    };
+    const getQuoteDeposit = cpAmm.getDepositQuote(depositeQuoteParams);
+    console.log("Quote Deposit::::", getQuoteDeposit);
+
+    // const liquidityDelta = cpAmm.getLiquidityDelta(liquidityDeltaParams);
+    const liquidityDelta = getQuoteDeposit.liquidityDelta;
+    console.log("liquidity delta::::", liquidityDelta);
+
+    const tokenAThreshold = new BN("0"); // 500 USDC (6 decimals)
+    const tokenBThreshold = new BN("10"); // 5 SOL (9 decimals)
 
     console.log("Parameters:");
     console.log("  Liquidity Delta:", liquidityDelta.toString());
@@ -442,8 +478,8 @@ describe("Initialize Honorary Position", () => {
       .addLiquidityQuoteOnly(
         Array.from(vaultId),
         liquidityDelta,
-        tokenAThreshold,
-        tokenBThreshold
+        getQuoteDeposit.outputAmount,
+        getQuoteDeposit.actualInputAmount
       )
       .accounts({
         authority: authority.publicKey,
@@ -451,8 +487,8 @@ describe("Initialize Honorary Position", () => {
         positionOwnerPda: positionOwnerPda,
         pool,
         position: position,
-        tokenAAccount: tokenBAccount,
-        tokenBAccount: tokenAAccount,
+        tokenAAccount: tokenAAccount,
+        tokenBAccount: tokenBAccount,
         tokenAVault: tokenAVault,
         tokenBVault: tokenBVault,
         tokenAMint: tokenAMint,

@@ -80,11 +80,11 @@ pub struct AddLiquidityQuoteOnly<'info> {
     )]
     pub meteora_program: UncheckedAccount<'info>,
 
-       /// System program
-       pub system_program: Program<'info, System>,
+    /// System program
+    pub system_program: Program<'info, System>,
 
-       /// CHECK: Will check later
-       pub event_authority: UncheckedAccount<'info>,
+    /// CHECK: Will check later
+    pub event_authority: UncheckedAccount<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
@@ -110,14 +110,14 @@ pub fn handler(
     msg!("Token B threshold: {}", token_b_amount_threshold);
 
     // Validate amounts
-    require!(
-        liquidity_delta > 0,
-        StarInvestorFeesError::InvalidLiquidityAmount
-    );
-    require!(
-        token_a_amount_threshold > 0 && token_b_amount_threshold > 0,
-        StarInvestorFeesError::InvalidLiquidityAmount
-    );
+    // require!(
+    //     liquidity_delta > 0,
+    //     StarInvestorFeesError::InvalidLiquidityAmount
+    // );
+    // require!(
+    //     token_a_amount_threshold > 0 && token_b_amount_threshold > 0,
+    //     StarInvestorFeesError::InvalidLiquidityAmount
+    // ); // edit to check for the quote mint only
 
     // Add liquidity via CPI to Meteora
     add_liquidity_cpi(
@@ -195,7 +195,6 @@ fn add_liquidity_cpi(
         AccountMeta::new_readonly(ctx.accounts.token_b_program.key(), false),   // token_b_program
         AccountMeta::new_readonly(ctx.accounts.event_authority.key(), false),
         AccountMeta::new_readonly(ctx.accounts.meteora_program.key(), false),
-  
     ];
 
     // Create the instruction

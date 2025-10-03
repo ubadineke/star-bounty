@@ -238,6 +238,9 @@ pub enum StarInvestorFeesError {
 
     #[msg("Tuktuk funding insufficient")]
     TuktukInsufficientFunding,
+
+    #[msg("Invalid fee mode: only quote-token fee collection (mode = 1) is supported.")]
+    InvalidFeeMode,
 }
 
 impl StarInvestorFeesError {

@@ -111,6 +111,16 @@ pub fn handler(ctx: Context<InitializeHonoraryPosition>, vault_id: [u8; 32]) -> 
         ctx.accounts.position_nft_mint.key()
     );
 
+    // Check mint to see if fee collection is quote only
+    // Checking if 'collectFeeMode: 1' on the pool struct
+    let collect_fee_mode = {
+        let data = ctx.accounts.pool.data.borrow();
+        data[484] // u8 value at offset 476 + 8(Discriminator)
+    };
+
+    require!(collect_fee_mode == 1, StarInvestorFeesError::InvalidFeeMode);
+
+    msg!("collect_fee_mode = {}", collect_fee_mode);
     // Create position through Meteora via CPI
     create_meteora_position(&ctx, vault_id)?;
 

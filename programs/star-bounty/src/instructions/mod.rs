@@ -1,8 +1,8 @@
 pub mod initialize_policy;
 pub use initialize_policy::*;
 
-pub mod distribute_fees;
-pub use distribute_fees::*;
+// pub mod distribute_fees;
+// pub use distribute_fees::*;
 
 pub mod finalize_policy;
 pub use finalize_policy::*;
